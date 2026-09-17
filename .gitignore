@@ -1,0 +1,12 @@
+# Secrets — never commit your real API key
+api_key.txt
+.env
+
+# Local uploads (keep the folder, ignore the files)
+assets/uploads/*
+!assets/uploads/.gitkeep
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+.vscode/
