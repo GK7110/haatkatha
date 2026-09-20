@@ -43,12 +43,13 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  const btnTranslate = document.getElementById('btnTranslateDesc');
-  if (btnTranslate) {
-    btnTranslate.addEventListener('click', async function () {
+  function wireTranslateButton(buttonId, targetLang) {
+    const btn = document.getElementById(buttonId);
+    if (!btn) return;
+    btn.addEventListener('click', async function () {
       const desc = document.getElementById('p_description');
       if (!desc.value) { alert('Write or generate a description first.'); return; }
-      const data = await callAi({ type: 'translate', text: desc.value, target: 'as' });
+      const data = await callAi({ type: 'translate', text: desc.value, target: targetLang });
       if (data && data.ok) {
         desc.value = data.text;
       } else if (data) {
@@ -56,6 +57,8 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
   }
+  wireTranslateButton('btnTranslateDesc', 'as');
+  wireTranslateButton('btnTranslateDescEn', 'en');
 
   const btnKeywords = document.getElementById('btnSuggestKeywords');
   if (btnKeywords) {

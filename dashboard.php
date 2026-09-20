@@ -147,6 +147,7 @@ include 'header.php';
     <div class="ai-buttons mb-3">
       <button type="button" class="btn btn-sm btn-outline-secondary" id="btnGenerateDesc">Generate with AI</button>
       <button type="button" class="btn btn-sm btn-outline-secondary" id="btnTranslateDesc">Translate to Assamese</button>
+      <button type="button" class="btn btn-sm btn-outline-secondary" id="btnTranslateDescEn">Translate to English</button>
       <span id="aiStatus" class="text-muted small ms-2"></span>
     </div>
 
