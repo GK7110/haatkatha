@@ -63,17 +63,23 @@ function ai_generate($prompt) {
         return ['ok' => false, 'text' => 'AI is not configured yet. Add your Gemini API key to api_key.txt.'];
     }
 
+    // Gemini's Interactions API (the old generateContent endpoint was retired).
+    // Docs: https://ai.google.dev/api/interactions-api
     $payload = json_encode([
-        'contents' => [[ 'parts' => [[ 'text' => $prompt ]] ]]
+        'model' => GEMINI_MODEL,
+        'input' => $prompt,
     ]);
 
-    $ch = curl_init(GEMINI_MODEL_URL . '?key=' . GEMINI_API_KEY);
+    $ch = curl_init(GEMINI_INTERACTIONS_URL);
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_POST => true,
-        CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+        CURLOPT_HTTPHEADER => [
+            'Content-Type: application/json',
+            'x-goog-api-key: ' . GEMINI_API_KEY,
+        ],
         CURLOPT_POSTFIELDS => $payload,
-        CURLOPT_TIMEOUT => 20,
+        CURLOPT_TIMEOUT => 25,
     ]);
     $response = curl_exec($ch);
     $error = curl_error($ch);
@@ -84,11 +90,30 @@ function ai_generate($prompt) {
     }
 
     $data = json_decode($response, true);
-    $text = $data['candidates'][0]['content']['parts'][0]['text'] ?? null;
+
+    // Any transport-level error Google sends back (bad key, quota, etc.)
+    if (!empty($data['errors'][0]['message'])) {
+        return ['ok' => false, 'text' => $data['errors'][0]['message']];
+    }
+    if (($data['status'] ?? '') === 'failed') {
+        return ['ok' => false, 'text' => 'The AI request failed. Please try again.'];
+    }
+
+    // Pull the text out of the first model_output step's content blocks.
+    $text = null;
+    foreach ($data['steps'] ?? [] as $step) {
+        if (($step['type'] ?? '') === 'model_output') {
+            foreach ($step['content'] ?? [] as $block) {
+                if (($block['type'] ?? '') === 'text' && !empty($block['text'])) {
+                    $text = $block['text'];
+                    break 2;
+                }
+            }
+        }
+    }
 
     if (!$text) {
-        $msg = $data['error']['message'] ?? 'No response from AI.';
-        return ['ok' => false, 'text' => $msg];
+        return ['ok' => false, 'text' => 'No response from AI. Please try again.'];
     }
 
     return ['ok' => true, 'text' => trim($text)];

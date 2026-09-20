@@ -31,7 +31,8 @@ define('GEMINI_API_KEY', trim(
     getenv('GEMINI_API_KEY')
     ?: (file_exists(__DIR__ . '/api_key.txt') ? file_get_contents(__DIR__ . '/api_key.txt') : '')
 ));
-define('GEMINI_MODEL_URL', 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent');
+define('GEMINI_INTERACTIONS_URL', 'https://generativelanguage.googleapis.com/v1beta/interactions');
+define('GEMINI_MODEL', 'gemini-3.6-flash');
 
 define('SITE_NAME', 'HaatKatha');
 define('BASE_URL', '/haatkatha'); // change if you deploy to a different folder
