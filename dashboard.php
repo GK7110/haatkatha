@@ -38,9 +38,16 @@ if ($action === 'save_product' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     // Where to send the artisan back to if something's wrong with their input
     $backTo = $productId ? "dashboard.php?action=edit_product&id=$productId" : "dashboard.php?action=add_product";
 
-    // Price must be a real, positive amount
+    // Price must be a real, positive amount, and within what the database can
+    // actually store (DECIMAL(10,2) maxes out at 99,999,999.99) — we check
+    // well under that so a huge typo gets a clear error instead of being
+    // silently truncated to the column's max value.
     if ($price <= 0) {
         flash('error', 'Price must be greater than zero.');
+        redirect($backTo);
+    }
+    if ($price > 1000000) {
+        flash('error', 'Price seems unusually high — please check the amount (max ₹10,00,000).');
         redirect($backTo);
     }
 
