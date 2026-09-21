@@ -35,11 +35,29 @@ if ($action === 'save_product' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $description = clean($_POST['description']);
     $keywords = clean($_POST['keywords']);
 
-    // image upload (optional)
+    // Where to send the artisan back to if something's wrong with their input
+    $backTo = $productId ? "dashboard.php?action=edit_product&id=$productId" : "dashboard.php?action=add_product";
+
+    // Price must be a real, positive amount
+    if ($price <= 0) {
+        flash('error', 'Price must be greater than zero.');
+        redirect($backTo);
+    }
+
+    // Image upload (optional) — validate the actual file content, not just the
+    // extension the browser reports, since that's easy to fake.
     $imageName = $_POST['existing_image'] ?? null;
     if (!empty($_FILES['image']['name'])) {
-        $ext = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
-        $imageName = uniqid('prod_') . '.' . strtolower($ext);
+        $allowedExt = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        $ext = strtolower(pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION));
+        $isRealImage = @getimagesize($_FILES['image']['tmp_name']) !== false;
+
+        if (!in_array($ext, $allowedExt) || !$isRealImage) {
+            flash('error', 'Please upload a valid image file (jpg, png, gif, or webp).');
+            redirect($backTo);
+        }
+
+        $imageName = uniqid('prod_') . '.' . $ext;
         move_uploaded_file($_FILES['image']['tmp_name'], __DIR__ . '/assets/uploads/' . $imageName);
     }
 
@@ -135,7 +153,7 @@ include 'header.php';
       </select>
     </label>
     <label>Price (&#8377;)
-      <input type="number" step="0.01" name="price" class="form-control" required value="<?= clean($editProduct['price'] ?? '') ?>">
+      <input type="number" step="0.01" min="0.01" name="price" class="form-control" required value="<?= clean($editProduct['price'] ?? '') ?>">
     </label>
     <label>Product photo
       <input type="file" name="image" class="form-control" accept="image/*">
